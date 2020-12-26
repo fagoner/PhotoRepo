@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using System.Linq;
+using PhotoRepo.Services;
 
 namespace PhotoRepo.Controllers
 {
@@ -21,11 +22,11 @@ namespace PhotoRepo.Controllers
 
         private IMongoCollection<BsonDocument> _photoCollection;
 
-        private IWebHostEnvironment _env;
+        private IFileService _fileService;
 
-        public PhotosController(IWebHostEnvironment env)
+        public PhotosController(IFileService fileService)
         {
-            _env = env;
+            _fileService = fileService;
             _mongoClient = new MongoClient("mongodb://root:example@localhost:27017");
             _database = _mongoClient.GetDatabase("photo_repo");
             _photoCollection = _database.GetCollection<BsonDocument>("photos");
@@ -40,28 +41,10 @@ namespace PhotoRepo.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> OnPost(IFormFile file)
+        public async Task<IActionResult> OnPost(IFormFile image)
         {
-            var fileSize = file.Length;
-
-            var finalPath = Path.Combine(_env.ContentRootPath, $"public/{file.FileName}");
-
-            // using (var stream = System.IO.File.Create(finalPath))
-            // {
-            //     await file.CopyToAsync(stream);
-            // }
-            //headers = file.Headers["Content-Type"].
-            var content = 
-                file.Headers.GetCommaSeparatedValues("Content-Type");
-                
-            return Accepted(new
-            {
-                fileSize = $"{fileSize} bytes",
-                fileName = file.FileName,
-                tempName = Path.GetTempFileName(),
-                finalPath = finalPath,
-                content = content
-            });
+            var newFile = await _fileService.Save(image);
+            return Accepted(new { message = $"New File saved: {newFile}" });
         }
 
     }
