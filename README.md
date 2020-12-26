@@ -40,7 +40,7 @@ Set the connection string on `appsettings.json`
 
 4. Endpoints
 
-* Save image
+* *Save image*
 
 ``` 
     curl --location --request POST 'https://localhost:5001/photos' \
