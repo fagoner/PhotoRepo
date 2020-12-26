@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using PhotoRepo.Models;
@@ -17,9 +18,15 @@ namespace PhotoRepo.Repositories
 
         private IMongoCollection<Photo> _photoCollection;
 
-        public PhotoRepository()
+        private IConfiguration _configuration;
+
+        public PhotoRepository(IConfiguration configuration)
         {
-            _mongoClient = new MongoClient("mongodb://root:example@localhost:27017");
+            _configuration = configuration;
+            
+            var connectionString = _configuration.GetConnectionString("Mongo");
+            _mongoClient = new MongoClient(connectionString);
+
             _database = _mongoClient.GetDatabase("photo_repo");
             _photoCollection = _database.GetCollection<Photo>("photos");
         }
