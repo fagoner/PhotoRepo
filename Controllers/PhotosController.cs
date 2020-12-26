@@ -1,13 +1,9 @@
-using System;
-using System.IO;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using MongoDB.Bson;
-using MongoDB.Driver;
+using PhotoRepo.Models;
+using PhotoRepo.Handlers;
 using System.Linq;
-using PhotoRepo.Services;
 
 namespace PhotoRepo.Controllers
 {
@@ -17,34 +13,45 @@ namespace PhotoRepo.Controllers
     public class PhotosController : ControllerBase
     {
 
-        private MongoClient _mongoClient;
-        private IMongoDatabase _database;
+        private IRepositoryHandler _repositoryHandler;
 
-        private IMongoCollection<BsonDocument> _photoCollection;
-
-        private IFileService _fileService;
-
-        public PhotosController(IFileService fileService)
+        public PhotosController(IRepositoryHandler repositoryHandler)
         {
-            _fileService = fileService;
-            _mongoClient = new MongoClient("mongodb://root:example@localhost:27017");
-            _database = _mongoClient.GetDatabase("photo_repo");
-            _photoCollection = _database.GetCollection<BsonDocument>("photos");
-
+            _repositoryHandler = repositoryHandler;
         }
 
         [HttpGet]
-        public ActionResult<dynamic> Index()
+        public async Task<ActionResult<PhotoIndexResponse>> Index()
         {
-            var count = _photoCollection.CountDocuments(new BsonDocument());
-            return Ok(new { count = count });
+            var photosResult = await _repositoryHandler.GetAll();
+
+            var result = new PhotoIndexResponse
+            {
+                Count = photosResult.Count(),
+                Photos = photosResult
+            };
+
+            return Ok(result);
         }
 
         [HttpPost]
-        public async Task<IActionResult> OnPost(IFormFile image)
+        public async Task<ActionResult<Photo>> OnPost(IFormFile image)
         {
-            var newFile = await _fileService.Save(image);
-            return Accepted(new { message = $"New File saved: {newFile}" });
+            var photo = await _repositoryHandler.Save(image);
+            return Accepted(photo);
+        }
+
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Photo>> GetById(string id)
+        {
+            var result = await _repositoryHandler.GetById(id);
+
+            if (result == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(result);
         }
 
     }

@@ -35,3 +35,9 @@ app.UseHttpsRedirection();
     );
 ```
 
+
+# Tasks
+
+- [ ] Create Model Mongo
+- [ ] Create a Repo for Photo
+- [ ] Crud for PhotoCollection
